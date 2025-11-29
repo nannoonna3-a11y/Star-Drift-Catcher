@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Star Drift Catcher</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0a0a0f;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      z-index: 10;
+    }
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 32px;
+      text-align: center;
+      display: none;
+    }
+    #gameOver button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div style="position:absolute; top:10px; right:10px; font-size:20px; color:white;">Made by Neya</div>
+  <div id="score">Score: 0</div>
+  <div id="gameOver">
+    <div id="finalScore"></div>
+    <button onclick="restartGame()">Play Again</button>
+  </div>
+  <canvas id="gameCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let score = 0;
+    let gameRunning = true;
+
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height - 80,
+      size: 30,
+      speed: 8,
+      dx: 0
+    };
+
+    const stars = [];
+
+    function createStar() {
+      const size = Math.random() * 15 + 10;
+      stars.push({
+        x: Math.random() * canvas.width,
+        y: -20,
+        size: size,
+        speed: Math.random() * 3 + 2
+      });
+    }
+
+    function drawPlayer() {
+      ctx.beginPath();
+      ctx.fillStyle = "cyan";
+      ctx.arc(player.x, player.y, player.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawStars() {
+      ctx.fillStyle = "yellow";
+      stars.forEach((s) => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function updateStars() {
+      stars.forEach((s, index) => {
+        s.y += s.speed;
+
+        if (s.y > canvas.height + 30) {
+          stars.splice(index, 1);
+        }
+
+        const dist = Math.hypot(player.x - s.x, player.y - s.y);
+        if (dist < player.size + s.size) {
+          score++;
+          document.getElementById("score").innerText = "Score: " + score;
+          stars.splice(index, 1);
+        }
+
+        if (s.y > canvas.height - 10 && Math.abs(player.x - s.x) < s.size + player.size) {
+          endGame();
+        }
+      });
+    }
+
+    function endGame() {
+      gameRunning = false;
+      document.getElementById("finalScore").innerText = "Final Score: " + score;
+      document.getElementById("gameOver").style.display = "block";
+    }
+
+    function restartGame() {
+      score = 0;
+      stars.length = 0;
+      player.x = canvas.width / 2;
+      gameRunning = true;
+      document.getElementById("gameOver").style.display = "none";
+      document.getElementById("score").innerText = "Score: 0";
+      animate();
+    }
+
+    function updatePlayer() {
+      player.x += player.dx;
+      if (player.x < player.size) player.x = player.size;
+      if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
+    }
+
+    function animate() {
+      if (!gameRunning) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPlayer();
+      drawStars();
+      updateStars();
+      updatePlayer();
+
+      if (Math.random() < 0.03) createStar();
+
+      requestAnimationFrame(animate);
+    }
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") player.dx = -player.speed;
+      if (e.key === "ArrowRight") player.dx = player.speed;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
+    });
+
+    animate();
+  </script>
+</body>
+</html>
